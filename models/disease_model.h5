@@ -1,0 +1,2 @@
+# ArecaGuard Model Weights Placeholder
+# Run `python models/train_model.py` to train and generate the complete HDF5 binary weights file (`models/disease_model.h5`).

@@ -1,0 +1,1 @@
+"""ArecaGuard application package."""
