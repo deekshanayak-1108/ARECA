@@ -1,103 +1,253 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ArecaGuard - AI-Powered Arecanut Disease Diagnostics</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Areca Disease Detection Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .navbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            padding: 10px 20px;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: #212529 !important;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-brand img {
+            height: 30px;
+            margin-right: 10px;
+        }
+
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .profile-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 18px;
+        }
+
+        .btn-signout {
+            background-color: #dc3545;
+            color: #ffffff;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .main-container {
+            padding: 30px;
+        }
+
+        .upload-card, .results-card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .upload-title {
+            font-weight: bold;
+            font-size: 22px;
+            margin-bottom: 5px;
+        }
+
+        .upload-instruction {
+            color: #6c757d;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .dropzone-area {
+            border: 2px dashed #198754;
+            border-radius: 8px;
+            background-color: #f8fff9;
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .dropzone-content img {
+            max-height: 200px;
+            border-radius: 4px;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn-analyze {
+            background-color: #198754;
+            color: #ffffff;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 6px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-reset {
+            background-color: #f1f3f5;
+            color: #495057;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .results-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .heatmap-section h5, .advice-section h5 {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .heatmap-container img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .disease-title {
+            font-weight: bold;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .advice-label {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .advice-box {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            min-height: 100px;
+            color: #495057;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
-  <!-- Header Navigation -->
-  <nav class="navbar">
-    <a href="/" class="brand">
-      <span class="brand-icon">🌱</span>
-      <span>ArecaGuard</span>
-    </a>
-    <ul class="nav-links">
-      <li><a href="/" class="active">Scan Image</a></li>
-      <li><a href="/history">Diagnosis History</a></li>
-      <li><a href="#about">About Project</a></li>
-    </ul>
-  </nav>
 
-  <!-- Main Container -->
-  <main class="container">
-    <header class="hero">
-      <h1>Arecanut Disease Detection & Advisory</h1>
-      <p>Upload a high-resolution photo of an arecanut fruit or bunch to detect diseases such as Mahali (Koleroga), Anthracnose, Fruit Split, or Bacterial Blotch in real time.</p>
-    </header>
+    <!-- Header / Navbar -->
+    <nav class="navbar shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <!-- Placeholder for logo image -->
+                <div style="background-color:#e9ecef; width:25px; height:25px; border-radius:50%; margin-right:8px; display:inline-block;"></div>
+                Areca
+            </a>
+            <div class="profile-section">
+                <div class="profile-icon">
+                    👤 <!-- Placeholder profile icon -->
+                </div>
+                <a href="#" class="btn-signout">Sign Out</a>
+            </div>
+        </div>
+    </nav>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #fee2e2; color: #991b1b;">
-            {{ message }}
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+    <!-- Main Content Area -->
+    <div class="container main-container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                
+                <!-- Upload Section Card -->
+                <div class="upload-card text-center">
+                    <h1 class="upload-title">Arecanut Fruit Disease Diagnosis</h1>
+                    <p class="upload-instruction">Upload a clear photo to a clear young green tender arecanut.</p>
+                    
+                    <div class="dropzone-area">
+                        <div class="dropzone-content">
+                            <!-- Placeholder for selected image -->
+                            <img src="https://via.placeholder.com/200?text=Arecanut+Sample" alt="Selected Arecanut">
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn-analyze">
+                            <span>🔍</span> Analyze Fruit
+                        </button>
+                        <button class="btn-reset">Reset</button>
+                    </div>
+                </div>
 
-    <!-- Upload Card -->
-    <section class="card">
-      <form id="upload-form" action="/predict" method="POST" enctype="multipart/form-data">
-        <div class="dropzone" id="dropzone">
-          <div class="dropzone-icon">📷</div>
-          <h3 class="dropzone-title">Drag & Drop Arecanut Image Here</h3>
-          <p class="dropzone-text">Supports JPG, PNG, and WEBP formats (Max size: 16 MB)</p>
-          <button type="button" class="btn btn-secondary">Browse from Device</button>
-          <input type="file" name="file" id="file-input" accept="image/*" required>
-        </div>
+                <!-- Results Section Card -->
+                <div class="results-card">
+                    <div class="results-section">
+                        
+                        <!-- Heatmap Visualization Column -->
+                        <div class="heatmap-section">
+                            <h5>Grad-CAM Lesion Heatmap</h5>
+                            <div class="heatmap-container">
+                                <!-- Placeholder for heatmap image -->
+                                <img src="https://via.placeholder.com/350x250?text=Heatmap+Visualization" alt="Heatmap Visualization">
+                            </div>
+                        </div>
+                        
+                        <!-- Diagnosis and Advisory Column -->
+                        <div class="advice-section">
+                            <h2 class="disease-title">Disease Name</h2>
+                            
+                            <div class="mb-3">
+                                <p class="advice-label">English Treatment Advice:</p>
+                                <div class="advice-box">
+                                    Example: 1 young, green tender arecanuts
+                                </div>
+                            </div>
 
-        <!-- Preview Container -->
-        <div class="preview-container" id="preview-container">
-          <p style="font-weight: 600; margin-bottom: 0.5rem;">Image Selected:</p>
-          <img id="preview-image" class="preview-image" src="" alt="Selected Preview">
-          <div style="margin-top: 1rem;">
-            <button type="submit" class="btn" id="submit-btn">Run AI Disease Diagnosis</button>
-          </div>
-        </div>
+                            <div>
+                                <p class="advice-label">Alternative English Treatment Advice (Kannada Translation Placeholder):</p>
+                                <div class="advice-box">
+                                    Example: English text. coon:for tender
+                                </div>
+                            </div>
+                        </div>
 
-        <!-- Loading State -->
-        <div class="loading-overlay" id="loading-overlay">
-          <div class="spinner"></div>
-          <p style="font-weight: 600; color: #065f46;">Processing image & generating Grad-CAM visualization...</p>
-        </div>
-      </form>
-    </section>
+                    </div>
+                </div>
 
-    <!-- Disease Information Guide -->
-    <section class="card" id="about">
-      <h2 style="margin-bottom: 1rem; font-size: 1.35rem; color: #064e3b;">Recognized Disease Conditions</h2>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
-        <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-          <h4 style="color: #059669;">Healthy Nut</h4>
-          <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">Normal fruit development with unblemished surface.</p>
+            </div>
         </div>
-        <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-          <h4 style="color: #dc2626;">Mahali / Koleroga</h4>
-          <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">Water-soaked lesions causing heavy premature nut drop.</p>
-        </div>
-        <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-          <h4 style="color: #ea580c;">Anthracnose</h4>
-          <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">Circular sunken dark necrotic spots on tender green nuts.</p>
-        </div>
-        <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-          <h4 style="color: #d97706;">Fruit Split</h4>
-          <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">Cracking due to severe soil moisture imbalances.</p>
-        </div>
-        <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-          <h4 style="color: #7c3aed;">Bacterial Blotch</h4>
-          <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">Bacterial water soaking and dark oily rot patches.</p>
-        </div>
-      </div>
-    </section>
-  </main>
+    </div>
 
-  <footer>
-    <p><strong>ArecaGuard Project</strong> | Developed by Deeksha K, Likitha GP, Shivani K S, Shekhar Vinayak</p>
-    <p>Guided by Mr. Ganaraj K | Sahyadri College of Engineering & Management, Mangaluru</p>
-  </footer>
-
-  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
