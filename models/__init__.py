@@ -1,1 +1,0 @@
-"""ArecaGuard models package."""
