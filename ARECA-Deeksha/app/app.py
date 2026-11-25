@@ -1,89 +1,105 @@
+import json
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+import uuid
+import numpy as np
+import tensorflow as tf
+from flask import Flask, render_template, request, url_for
+from werkzeug.utils import secure_filename
 
-app = Flask(__name__)
-app.secret_key = 'areca_secret_key_for_session'
+from app.utils.grad_cam import generate_gradcam, get_img_array
+from models.train_model import build_model
 
-# Configuration for file uploads
-UPLOAD_FOLDER = os.path.join('static', 'uploads')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app = Flask(__name__, static_folder="static", template_folder="templates")
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
+MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "disease_model.h5")
+CLASS_INDICES_PATH = os.path.join(PROJECT_ROOT, "models", "class_indices.json")
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-@app.route('/')
-def home():
-    if 'user' in session:
-        return redirect(url_for('index'))
-    return redirect(url_for('login'))
+DEFAULT_CLASSES = [
+    "Healthy",
+    "Mahali / Koleroga Detected",
+    "Anthracnose Detected",
+    "Fruit Split Detected",
+    "Bacterial Blotch Detected",
+]
+
+ADVICE_MAP = {
+    "Healthy": "No disease symptoms detected. Maintain routine orchard hygiene, balanced nutrition, and regular field monitoring.",
+    "Mahali / Koleroga Detected": "Spray 1% Bordeaux mixture on the infected nuts and surrounding palms immediately. Ensure proper drainage in the field to prevent further fungal spread.",
+    "Anthracnose Detected": "Prune and destroy severely infected parts, improve canopy airflow, and apply recommended copper-based or systemic fungicides as advised.",
+    "Fruit Split Detected": "Maintain uniform soil moisture and proper irrigation schedules to reduce sudden water stress and nutrient imbalances.",
+    "Bacterial Blotch Detected": "Remove affected fruits/tissues, avoid overhead irrigation where possible, and follow recommended bactericide/sanitation practices.",
+}
 
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-
-        if username and password:
-            session['user'] = username
-            flash('Login successful!', 'success')
-            return redirect(url_for('index'))
-        else:
-            flash('Please enter valid credentials.', 'danger')
-
-    return render_template('login.html')
+def load_class_names():
+    if os.path.exists(CLASS_INDICES_PATH):
+        with open(CLASS_INDICES_PATH, "r") as f:
+            indices = json.load(f)
+        if indices:
+            return [k for k, _ in sorted(indices.items(), key=lambda item: item[1])]
+    return DEFAULT_CLASSES
 
 
-@app.route('/logout')
-def logout():
-    session.pop('user', None)
-    flash('Logged out successfully.', 'info')
-    return redirect(url_for('login'))
+def load_areca_model():
+    if os.path.exists(MODEL_PATH) and os.path.getsize(MODEL_PATH) > 1024:
+        return tf.keras.models.load_model(MODEL_PATH)
+    return build_model(num_classes=len(load_class_names()))
 
 
-@app.route('/index')
+model = load_areca_model()
+class_names = load_class_names()
+
+
+@app.route("/", methods=["GET"])
 def index():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    return render_template('index.html', username=session['user'])
+    return render_template("index.html")
 
 
-@app.route('/predict', methods=['POST'])
+@app.route("/predict", methods=["POST"])
+@app.route("/result", methods=["POST"])
 def predict():
-    if 'user' not in session:
-        return redirect(url_for('login'))
+    file = request.files.get("file") or request.files.get("image")
+    if not file or file.filename == "":
+        return render_template("index.html", error="Please select an image to upload.")
 
-    if 'fruit_image' not in request.files:
-        flash('No file selected!', 'warning')
-        return redirect(url_for('index'))
+    safe_name = secure_filename(file.filename)
+    unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+    img_path = os.path.join(UPLOAD_FOLDER, unique_name)
+    file.save(img_path)
 
-    file = request.files['fruit_image']
+    img_array = get_img_array(img_path, size=(224, 224))
+    preds = model.predict(img_array, verbose=0)
+    pred_idx = int(np.argmax(preds[0]))
+    confidence_score = round(float(preds[0][pred_idx]) * 100, 2)
+    disease_name = class_names[pred_idx] if pred_idx < len(class_names) else f"Class {pred_idx}"
+    advice_en = ADVICE_MAP.get(
+        disease_name,
+        "Consult a local agricultural extension officer and inspect nearby palms for similar symptoms.",
+    )
 
-    if file.filename == '':
-        flash('No image selected for upload!', 'warning')
-        return redirect(url_for('index'))
+    heatmap_filename = f"gradcam_{unique_name}"
+    heatmap_path = os.path.join(UPLOAD_FOLDER, heatmap_filename)
+    generate_gradcam(
+        img_path=img_path,
+        model=model,
+        last_conv_layer_name="Conv_1",
+        output_path=heatmap_path,
+    )
 
-    if file:
-        image_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-        file.save(image_path)
-
-        # Mock ML Classification Result (Replace with actual model later)
-        mock_result = {
-            "disease_name": "Mahali / Koleroga",
-            "scientific_name": "Phytophthora palmivora",
-            "confidence": "96.4%",
-            "uploaded_image": f"uploads/{file.filename}",
-            "heatmap_image": f"uploads/{file.filename}",
-            "advisory": "Apply 1% Bordeaux mixture on the tender nuts and bunches preventively before heavy monsoon rains."
-        }
-
-        return render_template('result.html', result=mock_result)
+    return render_template(
+        "result.html",
+        disease_name=disease_name,
+        confidence_score=confidence_score,
+        advice_en=advice_en,
+        image_path=url_for("static", filename=f"uploads/{unique_name}"),
+        heatmap_path=url_for("static", filename=f"uploads/{heatmap_filename}"),
+    )
 
 
-@app.route('/history')
-def history():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    return render_template('history.html')
-
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+if __name__ == "__main__":
+    app.run(debug=True)

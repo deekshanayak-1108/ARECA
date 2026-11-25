@@ -3,39 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Areca Disease Detection Dashboard</title>
+    <title>Areca - Diagnostic Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             background-color: #f4f6f9;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
-
         .navbar {
             background-color: #ffffff;
             border-bottom: 1px solid #e9ecef;
             padding: 10px 20px;
         }
-
         .navbar-brand {
             font-weight: bold;
-            color: #212529 !important;
+            color: #198754 !important;
             font-size: 24px;
-            display: flex;
-            align-items: center;
         }
-
-        .navbar-brand img {
-            height: 30px;
-            margin-right: 10px;
-        }
-
-        .profile-section {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
         .profile-icon {
             width: 35px;
             height: 35px;
@@ -45,124 +30,48 @@
             align-items: center;
             justify-content: center;
             color: #6c757d;
-            font-size: 18px;
         }
-
-        .btn-signout {
-            background-color: #dc3545;
-            color: #ffffff;
-            border: none;
-            padding: 6px 15px;
-            border-radius: 6px;
-            font-size: 14px;
-            text-decoration: none;
-        }
-
-        .main-container {
-            padding: 30px;
-        }
-
-        .upload-card, .results-card {
+        .upload-card {
             background-color: #ffffff;
             border-radius: 12px;
             border: 1px solid #e9ecef;
-            padding: 25px;
-            margin-bottom: 30px;
+            padding: 30px;
+            margin-top: 30px;
+            position: relative;
         }
-
-        .upload-title {
-            font-weight: bold;
-            font-size: 22px;
-            margin-bottom: 5px;
-        }
-
-        .upload-instruction {
-            color: #6c757d;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-
         .dropzone-area {
             border: 2px dashed #198754;
             border-radius: 8px;
             background-color: #f8fff9;
-            height: 250px;
+            min-height: 220px;
             display: flex;
             align-items: center;
             justify-content: center;
+            cursor: pointer;
             margin-bottom: 20px;
         }
-
-        .dropzone-content img {
+        .dropzone-area:hover {
+            border-color: #146c43;
+            background-color: #f1fbf3;
+        }
+        #previewImage {
             max-height: 200px;
-            border-radius: 4px;
-        }
-
-        .action-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .btn-analyze {
-            background-color: #198754;
-            color: #ffffff;
-            border: none;
-            padding: 10px 25px;
+            display: none;
             border-radius: 6px;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
-
-        .btn-reset {
-            background-color: #f1f3f5;
-            color: #495057;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 6px;
-            font-size: 16px;
-        }
-
-        .results-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-        }
-
-        .heatmap-section h5, .advice-section h5 {
-            font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 15px;
-        }
-
-        .heatmap-container img {
+        #loadingOverlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-
-        .disease-title {
-            font-weight: bold;
-            font-size: 20px;
-            margin-bottom: 20px;
-        }
-
-        .advice-label {
-            font-weight: 500;
-            color: #495057;
-            margin-bottom: 5px;
-        }
-
-        .advice-box {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 15px;
-            min-height: 100px;
-            color: #495057;
-            font-size: 14px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 12px;
+            z-index: 10;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
@@ -171,83 +80,90 @@
     <!-- Header / Navbar -->
     <nav class="navbar shadow-sm">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">
-                <!-- Placeholder for logo image -->
-                <div style="background-color:#e9ecef; width:25px; height:25px; border-radius:50%; margin-right:8px; display:inline-block;"></div>
-                Areca
+            <a class="navbar-brand d-flex align-items-center" href="/dashboard">
+                <i class="fas fa-leaf me-2 text-success"></i> Areca
             </a>
-            <div class="profile-section">
+            <div class="d-flex align-items-center gap-3">
+                <a href="/history" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-history me-1"></i> History
+                </a>
                 <div class="profile-icon">
-                    👤 <!-- Placeholder profile icon -->
+                    <i class="fas fa-user"></i>
                 </div>
-                <a href="#" class="btn-signout">Sign Out</a>
+                <a href="/" class="btn btn-outline-danger btn-sm">Sign Out</a>
             </div>
         </div>
     </nav>
 
     <!-- Main Content Area -->
-    <div class="container main-container">
+    <div class="container pb-5">
         <div class="row justify-content-center">
-            <div class="col-lg-10">
+            <div class="col-lg-9">
                 
-                <!-- Upload Section Card -->
-                <div class="upload-card text-center">
-                    <h1 class="upload-title">Arecanut Fruit Disease Diagnosis</h1>
-                    <p class="upload-instruction">Upload a clear photo to a clear young green tender arecanut.</p>
+                <div class="upload-card text-center shadow-sm">
                     
-                    <div class="dropzone-area">
-                        <div class="dropzone-content">
-                            <!-- Placeholder for selected image -->
-                            <img src="https://via.placeholder.com/200?text=Arecanut+Sample" alt="Selected Arecanut">
+                    <!-- Loading Spinner Overlay -->
+                    <div id="loadingOverlay">
+                        <div class="spinner-border text-success mb-3" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">Loading...</span>
                         </div>
+                        <h5 class="fw-bold text-dark m-0">Analyzing Tender Arecanut...</h5>
+                        <p class="text-muted small mt-1">Running deep learning classification & Grad-CAM visualizer</p>
                     </div>
+
+                    <h3 class="fw-bold mb-1">Arecanut Fruit Disease Diagnosis</h3>
+                    <p class="text-muted small mb-4">Upload a clear photo of a young green tender arecanut.</p>
                     
-                    <div class="action-buttons">
-                        <button class="btn-analyze">
-                            <span>🔍</span> Analyze Fruit
-                        </button>
-                        <button class="btn-reset">Reset</button>
-                    </div>
-                </div>
-
-                <!-- Results Section Card -->
-                <div class="results-card">
-                    <div class="results-section">
+                    <form action="/result" method="GET" id="uploadForm" onsubmit="showLoadingState(event)">
+                        <input type="file" id="fileInput" name="fruit_image" accept="image/*" style="display: none;" onchange="previewSelectedImage(event)" required>
                         
-                        <!-- Heatmap Visualization Column -->
-                        <div class="heatmap-section">
-                            <h5>Grad-CAM Lesion Heatmap</h5>
-                            <div class="heatmap-container">
-                                <!-- Placeholder for heatmap image -->
-                                <img src="https://via.placeholder.com/350x250?text=Heatmap+Visualization" alt="Heatmap Visualization">
+                        <div class="dropzone-area" onclick="document.getElementById('fileInput').click()">
+                            <div id="dropzonePrompt">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-success mb-2"></i>
+                                <p class="m-0 fw-bold text-dark">Click or Drag & Drop photo here</p>
+                                <span class="text-muted small">PNG, JPG, or JPEG</span>
                             </div>
-                        </div>
-                        
-                        <!-- Diagnosis and Advisory Column -->
-                        <div class="advice-section">
-                            <h2 class="disease-title">Disease Name</h2>
-                            
-                            <div class="mb-3">
-                                <p class="advice-label">English Treatment Advice:</p>
-                                <div class="advice-box">
-                                    Example: 1 young, green tender arecanuts
-                                </div>
-                            </div>
-
-                            <div>
-                                <p class="advice-label">Alternative English Treatment Advice (Kannada Translation Placeholder):</p>
-                                <div class="advice-box">
-                                    Example: English text. coon:for tender
-                                </div>
-                            </div>
+                            <img id="previewImage" alt="Uploaded Arecanut Preview">
                         </div>
 
-                    </div>
+                        <div class="d-flex justify-content-center gap-3">
+                            <button type="submit" class="btn btn-success px-4 py-2" id="analyzeBtn">
+                                <i class="fas fa-search me-1"></i> Analyze Fruit
+                            </button>
+                            <button type="button" class="btn btn-light border px-4 py-2" onclick="resetImage()">Reset</button>
+                        </div>
+                    </form>
                 </div>
 
             </div>
         </div>
     </div>
 
+    <script>
+        function previewSelectedImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('previewImage');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('dropzonePrompt').style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function resetImage() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('previewImage').style.display = 'none';
+            document.getElementById('dropzonePrompt').style.display = 'block';
+        }
+
+        function showLoadingState(event) {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

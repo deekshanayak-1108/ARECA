@@ -3,167 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Areca - Login / Sign Up</title>
+    <title>Areca - Sign In / Sign Up</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
-            background-color: #f8f9fa;
-            height: 100vh;
+            background-color: #f4f6f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px 0;
         }
-        .auth-card {
+        .login-card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            padding: 35px;
             width: 100%;
-            max-width: 400px;
-            padding: 30px;
-            background: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 440px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
         }
-        .logo-container {
-            width: 80px;
-            height: 80px;
-            border: 2px dashed #ccc;
-            border-radius: 50%;
+        .brand-title {
+            font-weight: bold;
+            color: #198754;
+            font-size: 28px;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .brand-subtitle {
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #198754;
+        }
+        .nav-pills .nav-link {
+            color: #6c757d;
+            font-weight: 500;
+        }
+        .btn-green {
+            background-color: #198754;
+            color: #ffffff;
+            border: none;
+        }
+        .btn-green:hover {
+            background-color: #157347;
+            color: #ffffff;
+        }
+        .divider {
             display: flex;
             align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px auto;
-            cursor: pointer;
-            overflow: hidden;
-            background-color: #f1f3f5;
+            text-align: center;
+            color: #adb5bd;
+            font-size: 13px;
+            margin: 20px 0;
         }
-        .logo-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: none;
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #dee2e6;
         }
-        .btn-google {
-            border: 1px solid #db4437;
-            color: #db4437;
-            background-color: #fff;
-        }
-        .btn-google:hover {
-            background-color: #db4437;
-            color: #fff;
-        }
+        .divider::before { margin-right: .75em; }
+        .divider::after { margin-left: .75em; }
     </style>
 </head>
 <body>
 
-    <div class="auth-card">
-        <!-- App Logo Upload Section -->
-        <div class="text-center mb-3">
-            <label for="logoInput" class="logo-container" title="Click to upload app logo">
-                <span id="logoPlaceholderText" style="font-size: 11px; color: #6c757d;">Logo</span>
-                <img id="logoPreview" src="#" alt="Logo Preview">
-            </label>
-            <input type="file" id="logoInput" accept="image/*" class="d-none" onclick="" onchange="previewLogo(event)">
-            <h3 class="fw-bold text-success">Areca</h3>
-            <p class="text-muted small">Tender Arecanut Disease Detection</p>
+    <div class="login-card">
+        <div class="d-flex justify-content-center align-items-center mb-2">
+            <i class="fas fa-leaf text-success fa-2x me-2"></i>
+            <span class="brand-title m-0">Areca</span>
         </div>
+        <p class="brand-subtitle">Tender Arecanut Disease Detection</p>
 
-        <!-- Toggle Tabs -->
-        <ul class="nav nav-pills nav-fill mb-3" id="authTabs" role="tablist">
+        <!-- Tab Controls -->
+        <ul class="nav nav-pills nav-justified mb-4" id="authTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="signin-tab" data-bs-toggle="tab" data-bs-target="#signin" type="button" role="tab">Sign In</button>
+                <button class="nav-link active" id="signin-tab" data-bs-toggle="pill" data-bs-target="#signin-pane" type="button" role="tab">Sign In</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="signup-tab" data-bs-toggle="tab" data-bs-target="#signup" type="button" role="tab">Sign Up</button>
+                <button class="nav-link" id="signup-tab" data-bs-toggle="pill" data-bs-target="#signup-pane" type="button" role="tab">Sign Up</button>
             </li>
         </ul>
 
-        <div class="tab-content" id="authTabContent">
-            <!-- Sign In Form -->
-            <div class="tab-pane fade show active" id="signin" role="tabpanel">
-                <form onsubmit="handleSignIn(event)">
+        <div class="tab-content" id="authTabsContent">
+            
+            <!-- SIGN IN TAB -->
+            <div class="tab-pane fade show active" id="signin-pane" role="tabpanel">
+                <form action="/dashboard" method="GET">
                     <div class="mb-3">
-                        <label for="signinEmail" class="form-label">Email address</label>
-                        <input type="email" class="form-control" id="signinEmail" required>
+                        <label for="signinEmail" class="form-label small fw-bold text-secondary">Email address</label>
+                        <input type="email" class="form-control" id="signinEmail" required placeholder="name@example.com">
                     </div>
-                    <div class="mb-3">
-                        <label for="signinPassword" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="signinPassword" required>
+                    
+                    <div class="mb-4">
+                        <label for="signinPassword" class="form-label small fw-bold text-secondary">Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="signinPassword" required placeholder="••••••••">
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('signinPassword', 'toggleIcon1')">
+                                <i class="fas fa-eye" id="toggleIcon1"></i>
+                            </button>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-success w-100 mb-2">Sign In</button>
+
+                    <button type="submit" class="btn btn-green w-100 py-2 mb-3 fw-bold">Sign In</button>
                 </form>
-                <div class="text-center text-muted my-2"><small>OR</small></div>
-                <button type="button" class="btn btn-google w-100" onclick="handleGoogleAuth()">
-                    <i class="fab fa-google me-2"></i> Continue with Google
-                </button>
             </div>
 
-            <!-- Sign Up Form -->
-            <div class="tab-pane fade" id="signup" role="tabpanel">
-                <form onsubmit="handleSignUp(event)">
+            <!-- SIGN UP TAB -->
+            <div class="tab-pane fade" id="signup-pane" role="tabpanel">
+                <form action="/dashboard" method="GET">
                     <div class="mb-3">
-                        <label for="signupName" class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="signupName" required>
+                        <label for="signupName" class="form-label small fw-bold text-secondary">Full Name</label>
+                        <input type="text" class="form-control" id="signupName" required placeholder="John Doe">
                     </div>
+
                     <div class="mb-3">
-                        <label for="signupEmail" class="form-label">Email address</label>
-                        <input type="email" class="form-control" id="signupEmail" required>
+                        <label for="signupEmail" class="form-label small fw-bold text-secondary">Email address</label>
+                        <input type="email" class="form-control" id="signupEmail" required placeholder="name@example.com">
                     </div>
-                    <div class="mb-3">
-                        <label for="signupPassword" class="form-label">Password (Min 6 chars)</label>
-                        <input type="password" class="form-control" id="signupPassword" minlength="6" required>
+                    
+                    <div class="mb-4">
+                        <label for="signupPassword" class="form-label small fw-bold text-secondary">Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="signupPassword" required placeholder="Create password">
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('signupPassword', 'toggleIcon2')">
+                                <i class="fas fa-eye" id="toggleIcon2"></i>
+                            </button>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-success w-100 mb-2">Create Account</button>
+
+                    <button type="submit" class="btn btn-green w-100 py-2 mb-3 fw-bold">Create Account</button>
                 </form>
-                <div class="text-center text-muted my-2"><small>OR</small></div>
-                <button type="button" class="btn btn-google w-100" onclick="handleGoogleAuth()">
-                    <i class="fab fa-google me-2"></i> Sign up with Google
-                </button>
             </div>
+
         </div>
+
+        <div class="divider">OR</div>
+
+        <!-- Google OAuth Button -->
+        <a href="/dashboard" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2 text-decoration-none">
+            <i class="fab fa-google text-danger"></i> Continue with Google
+        </a>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function previewLogo(event) {
-            const reader = new FileReader();
-            reader.onload = function(){
-                const output = document.getElementById('logoPreview');
-                const placeholder = document.getElementById('logoPlaceholderText');
-                output.src = reader.result;
-                output.style.display = 'block';
-                placeholder.style.display = 'none';
-            };
-            reader.readAsDataURL(event.target.files[0]);
-        }
-
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
-
-        function handleSignIn(event) {
-            event.preventDefault();
-            const email = document.getElementById('signinEmail').value;
-            if (!validateEmail(email)) {
-                alert('Please enter a valid email address.');
-                return;
+        function togglePasswordVisibility(inputId, iconId) {
+            const pwdInput = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                pwdInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
             }
-            alert('Sign in successful!');
-        }
-
-        function handleSignUp(event) {
-            event.preventDefault();
-            const email = document.getElementById('signupEmail').value;
-            if (!validateEmail(email)) {
-                alert('Please enter a valid email address.');
-                return;
-            }
-            alert('Account created successfully!');
-        }
-
-        function handleGoogleAuth() {
-            // Integrate Google OAuth / Firebase Google Auth redirect here
-            alert('Redirecting to Google Authentication...');
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

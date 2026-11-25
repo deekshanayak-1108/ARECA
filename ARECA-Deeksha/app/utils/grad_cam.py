@@ -1,87 +1,74 @@
-import os
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
+import tensorflow as tf
 
 
-def generate_gradcam_heatmap(
-    model,
-    img_array: np.ndarray,
-    last_conv_layer_name: str = None,
-    pred_index: int = None,
-) -> np.ndarray:
-    """
-    Computes a Grad-CAM heatmap for a given input image and model.
-    """
-    try:
-        import tensorflow as tf
+def get_img_array(img_path, size=(224, 224)):
+    img = tf.keras.utils.load_img(img_path, target_size=size)
+    array = tf.keras.utils.img_to_array(img) / 255.0
+    return np.expand_dims(array, axis=0)
 
-        # If layer name not provided, find the last Conv2D layer dynamically
-        if last_conv_layer_name is None:
-            for layer in reversed(model.layers):
-                if "conv" in layer.name.lower():
-                    last_conv_layer_name = layer.name
-                    break
 
-        if last_conv_layer_name is None:
-            raise ValueError("No convolutional layer found in model.")
+def generate_gradcam_heatmap(img_array, model, last_conv_layer_name="Conv_1", pred_index=None):
+    img_tensor = tf.cast(img_array, tf.float32)
 
+    if hasattr(model, "layers") and isinstance(model.layers[0], tf.keras.Model):
+        base_model = model.layers[0]
+        conv_layer = base_model.get_layer(last_conv_layer_name)
         grad_model = tf.keras.models.Model(
-            inputs=[model.inputs],
-            outputs=[model.get_layer(last_conv_layer_name).output, model.output],
+            inputs=base_model.input,
+            outputs=[conv_layer.output, base_model.output],
         )
 
         with tf.GradientTape() as tape:
-            conv_outputs, predictions = grad_model(img_array)
+            conv_outputs, base_outputs = grad_model(img_tensor)
+            tape.watch(conv_outputs)
+            x = base_outputs
+            for layer in model.layers[1:]:
+                x = layer(x)
             if pred_index is None:
-                pred_index = tf.argmax(predictions[0])
-            class_channel = predictions[:, pred_index]
+                pred_index = tf.argmax(x[0])
+            class_channel = x[:, pred_index]
+    else:
+        conv_layer = model.get_layer(last_conv_layer_name)
+        grad_model = tf.keras.models.Model(
+            inputs=model.inputs,
+            outputs=[conv_layer.output, model.output],
+        )
 
-        # Compute gradients of top predicted class w.r.t. feature map
-        grads = tape.gradient(class_channel, conv_outputs)
-        pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+        with tf.GradientTape() as tape:
+            conv_outputs, preds = grad_model(img_tensor)
+            tape.watch(conv_outputs)
+            if pred_index is None:
+                pred_index = tf.argmax(preds[0])
+            class_channel = preds[:, pred_index]
 
-        conv_outputs = conv_outputs[0]
-        heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
-        heatmap = tf.squeeze(heatmap)
-
-        # Apply ReLU to keep only features that contribute positively
-        heatmap = tf.maximum(heatmap, 0) / (tf.math.reduce_max(heatmap) + 1e-10)
-        return heatmap.numpy()
-
-    except Exception as e:
-        # Fallback synthetic attention heatmap for stub / testing modes
-        h, w = img_array.shape[1], img_array.shape[2]
-        center_y, center_x = h // 2, w // 2
-        y, x = np.ogrid[:h, :w]
-        dist_from_center = np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
-        heatmap = np.exp(-dist_from_center / (min(h, w) / 3))
-        return (heatmap - heatmap.min()) / (heatmap.max() - heatmap.min() + 1e-8)
+    grads = tape.gradient(class_channel, conv_outputs)
+    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+    conv_outputs = conv_outputs[0]
+    heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
+    heatmap = tf.squeeze(heatmap)
+    heatmap = tf.maximum(heatmap, 0) / (tf.math.reduce_max(heatmap) + 1e-8)
+    return heatmap.numpy()
 
 
-def overlay_gradcam(
-    original_image_path: str,
-    heatmap: np.ndarray,
-    output_path: str,
-    alpha: float = 0.45,
-    colormap=cv2.COLORMAP_JET,
-) -> str:
-    """
-    Overlays Grad-CAM heatmap onto the original image and writes to output_path.
-    """
-    img = cv2.imread(original_image_path)
-    if img is None:
-        raise ValueError(f"Could not load image at {original_image_path}")
+def overlay_gradcam(img_path, heatmap, alpha=0.4, output_path=None):
+    img = cv2.imread(img_path)
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    heatmap_resized = cv2.resize(heatmap, (img_rgb.shape[1], img_rgb.shape[0]))
+    colormap = plt.get_cmap("jet")
+    heatmap_colored = (colormap(heatmap_resized)[:, :, :3] * 255).astype(np.uint8)
+    superimposed_rgb = np.clip(heatmap_colored * alpha + img_rgb * (1 - alpha), 0, 255).astype(np.uint8)
+    superimposed_bgr = cv2.cvtColor(superimposed_rgb, cv2.COLOR_RGB2BGR)
 
-    # Resize heatmap to match image dimensions
-    heatmap_resized = cv2.resize(heatmap, (img.shape[1], img.shape[0]))
-    heatmap_uint8 = np.uint8(255 * heatmap_resized)
+    if output_path:
+        cv2.imwrite(output_path, superimposed_bgr)
 
-    # Colorize heatmap
-    colored_heatmap = cv2.applyColorMap(heatmap_uint8, colormap)
+    return superimposed_bgr
 
-    # Superimpose heatmap on original image
-    superimposed_img = cv2.addWeighted(colored_heatmap, alpha, img, 1 - alpha, 0)
 
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    cv2.imwrite(output_path, superimposed_img)
-    return output_path
+def generate_gradcam(img_path, model, last_conv_layer_name="Conv_1", output_path=None):
+    img_array = get_img_array(img_path)
+    heatmap = generate_gradcam_heatmap(img_array, model, last_conv_layer_name=last_conv_layer_name)
+    return overlay_gradcam(img_path, heatmap, alpha=0.4, output_path=output_path)
